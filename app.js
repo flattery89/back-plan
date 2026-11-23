@@ -80,18 +80,51 @@
     const links = [];
     if (e.video) links.push(`<a class="vid" href="${e.video}" target="_blank" rel="noopener">▶ Watch how</a>`);
     if (e.alt) links.push(`<a class="vid ghost" href="${e.alt.video}" target="_blank" rel="noopener">${esc(e.alt.label)}</a>`);
+    const vid = ytId(e.video);
+    let media = "";
+    if (e.img) {
+      media = `<button type="button" class="media ${e.hold ? "hold" : "loop"}" ${vid ? `data-play="${vid}"` : ""} aria-label="Show ${esc(e.name)}">
+        <img src="img/${e.img}-0.jpg" alt="" loading="lazy"><img class="f2" src="img/${e.img}-1.jpg" alt="" loading="lazy">
+        ${vid ? `<span class="play">▶</span>` : ""}</button>`;
+    } else if (vid) {
+      media = `<button type="button" class="media" data-play="${vid}" aria-label="Play ${esc(e.name)} video">
+        <img src="https://i.ytimg.com/vi/${vid}/mqdefault.jpg" alt="" loading="lazy"><span class="play">▶</span></button>`;
+    }
     return `
       <div class="card ex ${done ? "done" : ""}">
         ${checkable ? `<input type="checkbox" data-key="${key}" ${done ? "checked" : ""} aria-label="Done: ${esc(e.name)}">` : ""}
         <div class="body">
+          <div class="ex-top"><div class="ex-text">
           <h3>${esc(e.name)}</h3>
           <div class="dose">${esc(item.dose)}</div>
           <div class="cue">${esc(e.cue)}</div>
+          </div>${media}</div>
+          <div class="player" hidden></div>
           ${e.joe ? `<div class="joe"><b>For your L4–L5:</b> ${esc(e.joe)}</div>` : ""}
           ${e.swap ? `<div class="swap">${esc(e.swap)}</div>` : ""}
           ${links.length ? `<div class="links">${links.join("")}</div>` : ""}
         </div>
       </div>`;
+  }
+
+  function ytId(url) {
+    const m = url && url.match(/(?:shorts\/|v=)([\w-]{11})/);
+    return m ? m[1] : null;
+  }
+
+  function togglePlayer(btn) {
+    const card = btn.closest(".card");
+    const player = card.querySelector(".player");
+    if (!player.hidden) { player.innerHTML = ""; player.hidden = true; btn.classList.remove("open"); return; }
+    document.querySelectorAll(".player:not([hidden])").forEach((p) => { p.innerHTML = ""; p.hidden = true; });
+    document.querySelectorAll(".media.open").forEach((m) => m.classList.remove("open"));
+    const id = btn.dataset.play;
+    const isShort = /shorts\//.test(card.querySelector("a.vid")?.href || "");
+    player.className = "player" + (isShort ? " tall" : "");
+    player.innerHTML = `<iframe src="https://www.youtube-nocookie.com/embed/${id}?autoplay=1&mute=1&loop=1&playlist=${id}&playsinline=1&rel=0&modestbranding=1"
+      title="Exercise demo" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
+      <button type="button" class="close-player">Close video</button>`;
+    player.hidden = false; btn.classList.add("open");
   }
 
   // ---------- trend (centralization) ----------
@@ -361,7 +394,8 @@
       </ul></div>
 
       <h2>About this plan</h2>
-      <p class="muted">Built from Matt Carmona's (@bigmona_fit) videos documenting his rehab of three herniated discs, adapted for a right-side L4–L5 herniation. It is not medical advice. Show it to your doctor or a physical therapist, and follow them where they differ.</p>`;
+      <p class="muted">Built from Matt Carmona's (@bigmona_fit) videos documenting his rehab of three herniated discs, adapted for a right-side L4–L5 herniation. It is not medical advice. Show it to your doctor or a physical therapist, and follow them where they differ.</p>
+      <p class="muted">Exercise photos: Free Exercise DB (public domain). Videos belong to their YouTube creators.</p>`;
   }
 
   // ---------- render + events ----------
@@ -396,6 +430,10 @@
   });
 
   view.addEventListener("click", (e) => {
+    const play = e.target.closest(".media[data-play]");
+    if (play) { togglePlayer(play); return; }
+    const close = e.target.closest(".close-player");
+    if (close) { togglePlayer(close.closest(".card").querySelector(".media")); return; }
     const wd = e.target.closest(".wd[data-off]");
     if (wd) { viewOffset = Number(wd.dataset.off); render(); return; }
     const b = e.target.closest("[data-act]"); if (!b) return;

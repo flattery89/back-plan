@@ -10,3 +10,5 @@ A phone-friendly daily plan for rehabbing an L4–L5 disc herniation, based on M
 Plain HTML/CSS/JS, no build step. Exercise content lives in `data.js`. Data is stored only in the phone's browser.
 
 Not medical advice.
+
+Exercise photos from [Free Exercise DB](https://github.com/yuhonas/free-exercise-db) (public domain). Demo videos are embedded from their YouTube creators.

@@ -20,12 +20,14 @@ const EXERCISES = {
     joe: "Only once elbows feel easy. Same rule: leg pain moving up = good, spreading down = stop.",
   },
   hinge: {
+    img: "hinge",
     name: "Pick things up with a hip hinge",
     video: YT("d5VcR2yps2w", true),
     cue: "Push your hips back, bend your knees, keep your back flat. Practice 10 times, then use it all day.",
     joe: "Rounding forward to pick things up is the most common way people re-aggravate an L4–L5 disc.",
   },
   catcow: {
+    img: "catcow",
     name: "Cat-cow",
     video: YT("WHUevrqeKIg", true),
     cue: "On hands and knees, slowly arch and round your back.",
@@ -64,12 +66,14 @@ const EXERCISES = {
     joe: "If you notice you stand leaning to one side, ask a physical therapist which way to shift before doing these.",
   },
   carry: {
+    img: "carry",
     name: "Single-arm carry",
     video: YT("7jfXW_R4mPY"),
-    cue: "Hold one weight at your side, stand tall, walk. Don't lean toward or away from the weight.",
+    cue: "(Picture shows two hands; use one.) Hold one weight at your side, stand tall, walk. Don't lean toward or away from the weight.",
     joe: "Do equal laps with each hand.",
   },
   extHold: {
+    img: "ext", hold: true,
     name: "45° back-extension hold",
     video: YT("9IHwhIgxmD0"),
     cue: "On the 45° bench, hold your body in a straight line.",
@@ -77,33 +81,39 @@ const EXERCISES = {
     swap: "No bench: lie face down and lift your chest a few inches off the floor, hold.",
   },
   ext: {
+    img: "ext",
     name: "45° back extension",
     video: YT("VH4Bqn1FUhM", true),
     cue: "Lower slowly, come up until your body is straight. Don't arch past straight.",
     swap: "No bench: lie face down and lift your chest a few inches off the floor.",
   },
   revHyper: {
+    img: "revHyper",
     name: "Reverse hyper",
     video: YT("grEQXOQ113s"),
     cue: "Lie face down on a bench with hips at the edge, lift both legs to straight.",
     alt: { label: "Band version", video: YT("N2JIedtn84U") },
   },
   splitSquat: {
+    img: "splitSquat",
     name: "Split squat",
     video: YT("Yv_RkuEsai4"),
     cue: "Feet staggered, lower straight down, front knee over front foot.",
   },
   bulgarian: {
+    img: "bulgarian",
     name: "Bulgarian split squat",
     video: YT("or1frhkjBDc", true),
     cue: "Back foot up on a bench. Lower slowly.",
   },
   bridge: {
+    img: "bridge",
     name: "Glute bridge",
     video: YT("R1OXPHRqehw", true),
     cue: "On your back, knees bent, squeeze your glutes and lift your hips. Don't arch your lower back at the top.",
   },
   hipThrust: {
+    img: "hipThrust",
     name: "Hip thrust",
     video: YT("XdA_kHlD6JQ", true),
     cue: "Upper back on a bench, drive your hips up, chin tucked.",
@@ -122,6 +132,7 @@ const EXERCISES = {
     joe: "Focus on the right leg. It's a gentle glide, never a stretch. If tingling lasts more than a few minutes afterward, skip it for now.",
   },
   landmine: {
+    img: "landmine",
     name: "Landmine rotation",
     video: YT("uVW93AIt-to", true),
     cue: "Arms straight, rotate the bar side to side by pivoting your feet. The turn comes from your hips, not your lower back.",
