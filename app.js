@@ -42,17 +42,40 @@
     return dow === 1 || dow === 3 || dow === 5 ? "strength" : "mobility";
   }
 
-  function todaysList() {
-    if (isFlare()) return FLARE.list;
+  let viewOffset = 0; // days from today shown on the Today tab
+  const viewDate = () => { const d = new Date(); d.setDate(d.getDate() + viewOffset); return d; };
+
+  function listFor(date) {
+    if (viewOffset === 0 && isFlare()) return FLARE.list;
     const s = stage();
     if (s.everyDay) return s.strength;
-    return dayType() === "strength" ? s.strength : s.mobility;
+    return dayType(date) === "strength" ? s.strength : s.mobility;
+  }
+
+  function weekStrip() {
+    // Monday-first week containing the viewed day
+    const base = new Date(); const dow = (base.getDay() + 6) % 7;
+    const monday = new Date(base); monday.setDate(base.getDate() - dow);
+    let html = `<div class="week">`;
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(monday); d.setDate(monday.getDate() + i);
+      const off = Math.round((parseKey(todayKey(d)) - parseKey(todayKey())) / 86400000);
+      const t = stage().everyDay ? "every" : dayType(d);
+      const label = t === "strength" ? "Strength" : t === "mobility" ? "Mobility" : "Daily";
+      const done = (state.done[todayKey(d)] || []).length > 0;
+      html += `<button type="button" class="wd ${off === viewOffset ? "sel" : ""} ${off === 0 ? "today" : ""} ${t}" data-off="${off}">
+        <span class="wd-name">${DAY_NAMES[d.getDay()].slice(0, 3)}</span>
+        <span class="wd-num">${d.getDate()}</span>
+        <span class="wd-type">${label}${done ? " ✓" : ""}</span></button>`;
+    }
+    return html + `</div>`;
   }
 
   function exerciseCard(item, idx, checkable) {
     const e = EXERCISES[item.ex];
     const doneList = state.done[todayKey()] || [];
     const key = `${isFlare() ? "f" : state.stage}-${dayType()}-${item.ex}`;
+    checkable = checkable && viewOffset === 0;
     const done = doneList.includes(key);
     const links = [];
     if (e.video) links.push(`<a class="vid" href="${e.video}" target="_blank" rel="noopener">▶ Watch how</a>`);
@@ -90,7 +113,9 @@
   function renderToday() {
     const s = stage();
     const today = todayKey();
-    const list = todaysList();
+    const vd = viewDate();
+    const isToday = viewOffset === 0;
+    const list = listFor(vd);
     const doneList = state.done[today] || [];
     const keys = list.map((i) => `${isFlare() ? "f" : state.stage}-${dayType()}-${i.ex}`);
     const doneCount = keys.filter((k) => doneList.includes(k)).length;
@@ -98,15 +123,25 @@
     const t = trend();
 
     let heading;
-    if (isFlare()) heading = "Flare-up day";
-    else if (s.everyDay) heading = "Today's routine";
-    else heading = dayType() === "strength" ? "Strength day" : "Mobility day";
+    if (isToday && isFlare()) heading = "Flare-up day";
+    else if (s.everyDay) heading = isToday ? "Today's routine" : "Daily routine";
+    else heading = dayType(vd) === "strength" ? "Strength day" : "Mobility day";
 
     let html = "";
-    if (isFlare()) html += `<div class="banner red"><b>Flare-up mode.</b> ${esc(FLARE.intro)}</div>`;
-    if (t) html += `<div class="banner ${t.cls}">${esc(t.text)}</div>`;
+    if (!state.quizDone && !state.log.length) {
+      html += `<div class="card"><h3>Where should you start?</h3>
+        <p class="muted">Three quick questions put you on the right stage. You don't have to start where Matt did.</p>
+        <button class="btn" data-act="quiz">Find my starting stage</button></div>`;
+    }
+    html += weekStrip();
+    if (!isToday) {
+      html += `<div class="banner accent">Preview of ${DAY_NAMES[vd.getDay()]}. You can check items off on the day itself.
+        <button class="btn ghost" style="margin-top:8px" data-act="backToday">Back to today</button></div>`;
+    }
+    if (isToday && isFlare()) html += `<div class="banner red"><b>Flare-up mode.</b> ${esc(FLARE.intro)}</div>`;
+    if (isToday && t) html += `<div class="banner ${t.cls}">${esc(t.text)}</div>`;
 
-    html += `<div class="card">
+    if (isToday) html += `<div class="card">
       <h3>How's it feeling today?</h3>
       ${entry
         ? `<p class="muted">Back ${entry.back}/10 · Leg ${entry.leg}/10 · Reaches: ${esc(REACH[entry.reach])}</p>
@@ -116,12 +151,12 @@
     </div>`;
 
     html += `<h2>${heading}</h2>
-      <p class="muted">${DAY_NAMES[new Date().getDay()]} · Stage ${s.id}: ${esc(s.name)}${
-        !s.everyDay && !isFlare() ? (dayType() === "strength" ? " · 10–15 min" : " · Next strength day: " + nextStrength()) : ""
+      <p class="muted">${DAY_NAMES[vd.getDay()]} · Stage ${s.id}: ${esc(s.name)}${
+        !s.everyDay && !(isToday && isFlare()) ? (dayType(vd) === "strength" ? " · 10–15 min" : isToday ? " · Next strength day: " + nextStrength() : "") : ""
       }</p>
-      <div class="progress"><div style="width:${list.length ? (doneCount / list.length) * 100 : 0}%"></div></div>`;
+      ${isToday ? `<div class="progress"><div style="width:${list.length ? (doneCount / list.length) * 100 : 0}%"></div></div>` : ""}`;
     html += list.map((it, i) => exerciseCard(it, i, true)).join("");
-    if (doneCount === list.length && list.length) html += `<div class="banner green"><b>Done for today.</b> Small wins make big wins.</div>`;
+    if (isToday && doneCount === list.length && list.length) html += `<div class="banner green"><b>Done for today.</b> Small wins make big wins.</div>`;
     if (s.caution && !isFlare()) html += `<div class="banner yellow">${esc(s.caution)}</div>`;
     view.innerHTML = html;
   }
@@ -186,8 +221,48 @@
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
+  const QUIZ = [
+    { q: "Can you walk for 20 minutes without your leg pain getting worse or spreading further down?",
+      a: ["Yes", "No"] },
+    { q: "Right now, how far down your right leg does the pain or tingling reach?",
+      a: ["No leg pain", "Buttock or thigh", "Knee or below"] },
+    { q: "Lie face down, propped on your elbows, for 1 minute. Does your leg pain stay the same or ease?",
+      hint: "Try it now if you haven't. Stop if the leg pain spreads.",
+      a: ["Stays the same or eases", "It spreads down the leg", "Can't try right now"] },
+  ];
+  let quizAnswers = [];
+
+  function quizResult() {
+    const [walk, reach, prone] = quizAnswers;
+    if (walk === 1) return { stage: 0, why: "Walking 20 minutes still aggravates the leg, so start by calming it down. You'll likely move up within a week or two." };
+    if (reach === 2) return { stage: 1, why: "The pain still reaches your knee or below, which means the nerve is still irritated. Stage 1 is gentle enough not to stir it up." };
+    if (prone !== 0) return { stage: 1, why: "Until you know lying face-down doesn't push the pain down your leg, start with the gentler routine." };
+    return { stage: 2, why: "You walk fine, the leg pain stays above the knee, and the face-down test doesn't aggravate it. That's roughly where Matt was around week 3–4. Stage 2 is his core Mon/Wed/Fri routine." };
+  }
+
+  function renderQuiz() {
+    const i = quizAnswers.length;
+    if (i < QUIZ.length) {
+      const item = QUIZ[i];
+      view.innerHTML = `<h2>Where should you start?</h2>
+        <p class="muted">Question ${i + 1} of ${QUIZ.length}</p>
+        <div class="card"><h3>${esc(item.q)}</h3>${item.hint ? `<p class="muted">${esc(item.hint)}</p>` : ""}
+        ${item.a.map((a, n) => `<button class="btn ghost" style="margin-top:8px" data-act="quizAnswer" data-n="${n}">${esc(a)}</button>`).join("")}</div>
+        <button class="btn ghost" data-act="cancel">Cancel</button>`;
+      return;
+    }
+    const r = quizResult(); const s = STAGES[r.stage];
+    view.innerHTML = `<h2>Start at Stage ${s.id}: ${esc(s.name)}</h2>
+      <div class="card"><p>${esc(r.why)}</p>
+      <p style="font-size:14px"><b>You'll move up when:</b> ${esc(s.gate)}</p></div>
+      <button class="btn" data-act="quizStart" data-stage="${s.id}">Start Stage ${s.id}</button>
+      <button class="btn ghost" data-act="quiz">Answer again</button>
+      <p class="muted" style="margin-top:12px">Starting lower than you need costs you a week at most. Starting too high can cause a flare that costs much more.</p>`;
+  }
+
   function renderPlan() {
-    let html = `<h2>Your plan</h2>
+    let html = `<button class="btn ghost" style="margin-bottom:14px" data-act="quiz">Not sure which stage? Take the 3-question check</button>
+      <h2>Your plan</h2>
       <p class="muted">Based on Matt Carmona's rehab of three herniated discs, adapted for your right-side L4–L5 herniation. The weeks are a guide. Move to the next stage only when you pass its check, not because a week went by.</p>`;
     html += STAGES.map((s) => {
       const cur = s.id === state.stage;
@@ -294,12 +369,12 @@
     document.querySelectorAll(".tabs button").forEach((b) => b.classList.toggle("on", b.dataset.tab === tab));
     document.getElementById("flareBtn").classList.toggle("on", !!isFlare());
     document.getElementById("headerSub").textContent = `Stage ${stage().id}: ${stage().name} · day ${daysBetween(state.stageStart, todayKey()) + 1}`;
-    ({ today: renderToday, plan: renderPlan, log: renderLog, rules: renderRules, checkin: renderCheckin }[tab])();
+    ({ today: renderToday, plan: renderPlan, log: renderLog, rules: renderRules, checkin: renderCheckin, quiz: renderQuiz }[tab])();
   }
 
   document.querySelector(".tabs").addEventListener("click", (e) => {
     const b = e.target.closest("button"); if (!b) return;
-    tab = b.dataset.tab; render(); window.scrollTo(0, 0);
+    tab = b.dataset.tab; viewOffset = 0; render(); window.scrollTo(0, 0);
   });
 
   document.getElementById("flareBtn").addEventListener("click", () => {
@@ -321,14 +396,23 @@
   });
 
   view.addEventListener("click", (e) => {
+    const wd = e.target.closest(".wd[data-off]");
+    if (wd) { viewOffset = Number(wd.dataset.off); render(); return; }
     const b = e.target.closest("[data-act]"); if (!b) return;
     const act = b.dataset.act;
+    if (act === "backToday") { viewOffset = 0; render(); }
+    if (act === "quiz") { quizAnswers = []; tab = "quiz"; render(); window.scrollTo(0, 0); }
+    if (act === "quizAnswer") { quizAnswers.push(Number(b.dataset.n)); render(); window.scrollTo(0, 0); }
+    if (act === "quizStart") {
+      state.stage = Number(b.dataset.stage); state.stageStart = todayKey(); state.flareUntil = null; state.quizDone = true;
+      save(); tab = "today"; viewOffset = 0; render(); window.scrollTo(0, 0);
+    }
     if (act === "checkin") { tab = "checkin"; render(); window.scrollTo(0, 0); }
     if (act === "cancel") { tab = "today"; render(); }
     if (act === "saveCheckin") saveCheckin();
     if (act === "setStage") {
-      state.stage = Number(b.dataset.stage); state.stageStart = todayKey(); state.flareUntil = null;
-      save(); tab = "today"; render(); window.scrollTo(0, 0);
+      state.stage = Number(b.dataset.stage); state.stageStart = todayKey(); state.flareUntil = null; state.quizDone = true;
+      save(); tab = "today"; viewOffset = 0; render(); window.scrollTo(0, 0);
     }
     if (act === "export") {
       const blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
