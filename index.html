@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Back Plan</title>
+<meta name="description" content="Daily disc rehab plan, exercise videos, and pain log.">
+<meta name="theme-color" content="#0f766e">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Back Plan">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top">
+  <div>
+    <div class="title">Back Plan</div>
+    <div class="sub" id="headerSub"></div>
+  </div>
+  <button class="flare-btn" id="flareBtn" type="button">Flare-up</button>
+</header>
+
+<main id="view"></main>
+
+<nav class="tabs">
+  <button data-tab="today" class="on" type="button"><span class="ico">●</span>Today</button>
+  <button data-tab="plan" type="button"><span class="ico">≡</span>Plan</button>
+  <button data-tab="log" type="button"><span class="ico">↗</span>Log</button>
+  <button data-tab="rules" type="button"><span class="ico">!</span>Rules</button>
+</nav>
+
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
